@@ -81,7 +81,9 @@ func (c *Client) GetAccountInfo() (*AccountInfo, error) {
 	// 从页面提取用户名
 	reName := regexp.MustCompile(`(\d{11,})`)
 	info := &AccountInfo{
-		UserName: c.uid,
+		UserInfo: UserInfo{
+			UserName: c.uid,
+		},
 	}
 	if m := reName.FindStringSubmatch(html); len(m) > 1 {
 		info.UserName = m[1]

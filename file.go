@@ -19,7 +19,7 @@ func (c *Client) GetFileList(fid int) (*FileList, error) {
 		"pg":        "1",
 		"vei":       c.vei,
 	}
-	body, _, err := c.post(c.apiURL(pathFileList), data, nil)
+	body, _, err := c.post(c.apiURL(pathTaskAPI), data, nil)
 	if err != nil {
 		return nil, fmt.Errorf("get file list failed: %w", err)
 	}
@@ -51,7 +51,7 @@ func (c *Client) MoveFiles(fids []string, fid int) error {
 		"folder_id": fmt.Sprintf("%d", fid),
 		"file_id":   strings.Join(fids, "-"),
 	}
-	body, _, err := c.post(c.apiURL(pathMoveFiles), data, nil)
+	body, _, err := c.post(c.apiURL(pathTaskAPI), data, nil)
 	if err != nil {
 		return fmt.Errorf("move files failed: %w", err)
 	}
@@ -69,7 +69,7 @@ func (c *Client) DeleteFiles(fids []string) error {
 		"task":    "6",
 		"file_id": strings.Join(fids, "-"),
 	}
-	body, _, err := c.post(c.apiURL(pathDeleteFiles), data, nil)
+	body, _, err := c.post(c.apiURL(pathTaskAPI), data, nil)
 	if err != nil {
 		return fmt.Errorf("delete files failed: %w", err)
 	}
@@ -89,7 +89,7 @@ func (c *Client) SetPassword(entityID int, pwd string) error {
 		"shows":     "2",
 		"shownames": pwd,
 	}
-	body, _, err := c.post(c.apiURL(pathSetPasswd), data, nil)
+	body, _, err := c.post(c.apiURL(pathTaskAPI), data, nil)
 	if err != nil {
 		return fmt.Errorf("set password failed: %w", err)
 	}

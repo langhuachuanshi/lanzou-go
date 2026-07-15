@@ -2,7 +2,6 @@ package lanzou
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -173,27 +172,6 @@ func (c *Client) postMultipart(rawURL string, fields map[string]string, fileFiel
 	return c.doRequest(req)
 }
 
-// postJSON 发送 JSON POST 请求
-func (c *Client) postJSON(rawURL string, data interface{}, headers map[string]string) ([]byte, http.Header, error) {
-	jsonData, err := json.Marshal(data)
-	if err != nil {
-		return nil, nil, err
-	}
-	req, err := http.NewRequest("POST", rawURL, bytes.NewReader(jsonData))
-	if err != nil {
-		return nil, nil, err
-	}
-	c.setCommonHeaders(req)
-	req.Header.Set("Content-Type", "application/json")
-	for k, v := range headers {
-		req.Header.Set(k, v)
-	}
-	for _, cookie := range c.cookies {
-		req.AddCookie(cookie)
-	}
-	return c.doRequest(req)
-}
-
 // doRequest 执行请求并保存 cookies
 func (c *Client) doRequest(req *http.Request) ([]byte, http.Header, error) {
 	resp, err := c.httpClient.Do(req)
@@ -261,39 +239,6 @@ func (c *Client) getCookieValue(name string) string {
 		}
 	}
 	return ""
-}
-
-// parseResp 解析 API 通用响应
-func (c *Client) parseResp(body []byte) (*apiResp, error) {
-	var resp apiResp
-	if err := json.Unmarshal(body, &resp); err != nil {
-		return nil, fmt.Errorf("%w: invalid json response", ErrAPIError)
-	}
-	return &resp, nil
-}
-
-// checkResp 检查响应状态码
-func (c *Client) checkResp(resp *apiResp) error {
-	switch resp.Zt {
-	case 1: // 成功
-		return nil
-	case 2: // 部分成功
-		return nil
-	case 0: // 失败
-		var info string
-		json.Unmarshal(resp.Info, &info)
-		if strings.Contains(info, "密码") || strings.Contains(info, "password") {
-			return ErrPasswordWrong
-		}
-		if strings.Contains(info, "过期") || strings.Contains(info, "expired") {
-			return ErrFileExpired
-		}
-		return fmt.Errorf("%w: %s", ErrAPIError, info)
-	default:
-		var info string
-		json.Unmarshal(resp.Info, &info)
-		return fmt.Errorf("%w: zt=%d, info=%s", ErrAPIError, resp.Zt, info)
-	}
 }
 
 // isLoggedIn 检查是否已登录

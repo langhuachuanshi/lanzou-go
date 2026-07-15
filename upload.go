@@ -50,7 +50,7 @@ func (c *Client) UploadFile(filePath string, fid int, desc ...string) (*UploadRe
 	}
 
 	// 上传延迟
-	if c.uploadDelay[1] > 0 {
+	if c.uploadDelay[1] > c.uploadDelay[0] {
 		delay := c.uploadDelay[0] + rand.Intn(c.uploadDelay[1]-c.uploadDelay[0])
 		time.Sleep(time.Duration(delay) * time.Millisecond)
 	}
@@ -116,7 +116,7 @@ func (c *Client) UploadFileByURL(fileURL string, fid int, desc ...string) (*Uplo
 		"name":      filepath.Base(fileURL),
 		"des":       descStr,
 	}
-	body, _, err := c.post(baseURLPC+pathFileList, data, nil)
+	body, _, err := c.post(baseURLPC+pathTaskAPI, data, nil)
 	if err != nil {
 		return nil, fmt.Errorf("upload by url failed: %w", err)
 	}

@@ -128,7 +128,7 @@ func (c *Client) resolveDownloadURLForFile(f *FileInfo) (string, error) {
 		"task":    "22",
 		"file_id": f.ID,
 	}
-	body, _, err := c.post(c.apiURL(pathDownload), data, nil)
+	body, _, err := c.post(c.apiURL(pathAjaxm), data, nil)
 	if err != nil {
 		return "", err
 	}

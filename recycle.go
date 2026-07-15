@@ -17,7 +17,7 @@ func (c *Client) GetRecycleList(page int) (*RecycleList, error) {
 		"task": "7",
 		"pg":   fmt.Sprintf("%d", page),
 	}
-	body, _, err := c.post(c.apiURL(pathRecycleList), data, nil)
+	body, _, err := c.post(c.apiURL(pathTaskAPI), data, nil)
 	if err != nil {
 		return nil, fmt.Errorf("get recycle list failed: %w", err)
 	}
@@ -43,7 +43,7 @@ func (c *Client) MoveToTrash(fids []string) error {
 		"task":    "6",
 		"file_id": strings.Join(fids, "-"),
 	}
-	body, _, err := c.post(c.apiURL(pathRecycleList), data, nil)
+	body, _, err := c.post(c.apiURL(pathTaskAPI), data, nil)
 	if err != nil {
 		return fmt.Errorf("move to trash failed: %w", err)
 	}
@@ -61,7 +61,7 @@ func (c *Client) RestoreFiles(fids []string) error {
 		"task":    "8",
 		"file_id": strings.Join(fids, "-"),
 	}
-	body, _, err := c.post(c.apiURL(pathRestoreFiles), data, nil)
+	body, _, err := c.post(c.apiURL(pathTaskAPI), data, nil)
 	if err != nil {
 		return fmt.Errorf("restore files failed: %w", err)
 	}
@@ -77,7 +77,7 @@ func (c *Client) CleanRecycle() error {
 	data := map[string]string{
 		"task": "9",
 	}
-	body, _, err := c.post(c.apiURL(pathCleanRecycle), data, nil)
+	body, _, err := c.post(c.apiURL(pathTaskAPI), data, nil)
 	if err != nil {
 		return fmt.Errorf("clean recycle failed: %w", err)
 	}

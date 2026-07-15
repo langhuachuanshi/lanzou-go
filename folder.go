@@ -17,7 +17,7 @@ func (c *Client) GetDirList(fid int) (*FolderList, error) {
 		"task":      "47",
 		"folder_id": fmt.Sprintf("%d", fid),
 	}
-	body, _, err := c.post(c.apiURL(pathDirList), data, nil)
+	body, _, err := c.post(c.apiURL(pathTaskAPI), data, nil)
 	if err != nil {
 		return nil, fmt.Errorf("get dir list failed: %w", err)
 	}
@@ -45,7 +45,7 @@ func (c *Client) NewFolder(name string, parentID int) (*FolderInfo, error) {
 		"folder_name": name,
 		"folder_description": "",
 	}
-	body, _, err := c.post(c.apiURL(pathNewFolder), data, nil)
+	body, _, err := c.post(c.apiURL(pathTaskAPI), data, nil)
 	if err != nil {
 		return nil, fmt.Errorf("create folder failed: %w", err)
 	}
@@ -79,7 +79,7 @@ func (c *Client) DeleteFolder(fids []string) error {
 		"task":      "3",
 		"folder_id": strings.Join(fids, "-"),
 	}
-	body, _, err := c.post(c.apiURL(pathNewFolder), data, nil)
+	body, _, err := c.post(c.apiURL(pathTaskAPI), data, nil)
 	if err != nil {
 		return fmt.Errorf("delete folder failed: %w", err)
 	}
@@ -98,7 +98,7 @@ func (c *Client) MoveFolder(fids []string, fid int) error {
 		"folder_id":   fmt.Sprintf("%d", fid),
 		"folder_ids":  strings.Join(fids, "-"),
 	}
-	body, _, err := c.post(c.apiURL(pathNewFolder), data, nil)
+	body, _, err := c.post(c.apiURL(pathTaskAPI), data, nil)
 	if err != nil {
 		return fmt.Errorf("move folder failed: %w", err)
 	}

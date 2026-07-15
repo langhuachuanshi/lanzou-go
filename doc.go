@@ -27,7 +27,7 @@
 //	    log.Fatal(err)
 //	}
 //	for _, f := range files.Text {
-//	    fmt.Printf("[%s] %s (%s)\n", f.FileID, f.FileName, f.FileSize)
+//	    fmt.Printf("[%s] %s (%s)\n", f.ID, f.NameAll, f.Size)
 //	}
 //
 //	// 解析直链（无需登录）
