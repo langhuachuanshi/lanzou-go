@@ -10,7 +10,7 @@ const (
 const (
 	pathLogin        = "/account/loginajax"
 	pathLogout       = "/account/logout"
-	pathUpload       = "/up.php"
+	pathUpload       = "/html5up.php" // 上传入口（fileup.php 已弃用，返回 HTML，见 issue #110）
 	pathTaskAPI      = "/doupload.php" // 文件/文件夹/回收站操作统一入口
 	pathAjaxm        = "/ajaxm.php"    // 直链解析
 )
@@ -40,6 +40,7 @@ const (
 	defaultMaxSize    = 100 * 1024 * 1024
 	defaultTimeout    = 30
 	defaultMaxDLCount = 3
+	defaultVei        = "UFRQUlBWVggGBAdX" // 默认 vei 占位值（运行时会从页面动态获取）
 )
 
 // ChallengeConfig acw_sc__v2 JS 挑战参数配置

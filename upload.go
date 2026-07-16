@@ -1,11 +1,8 @@
 package lanzou
 
 import (
-	"crypto/md5"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"io"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -35,66 +32,84 @@ func (c *Client) UploadFile(filePath string, fid int, desc ...string) (*UploadRe
 	}
 	defer f.Close()
 
-	// 计算文件MD5
-	hash := md5.New()
-	if _, err := io.Copy(hash, f); err != nil {
-		return nil, fmt.Errorf("calc md5 failed: %w", err)
-	}
-	md5Str := hex.EncodeToString(hash.Sum(nil))
-	f.Seek(0, 0)
-
-	// 获取上传参数
-	uploadInfo, err := c.getUploadParams(fid)
-	if err != nil {
-		return nil, fmt.Errorf("get upload params failed: %w", err)
-	}
-
 	// 上传延迟
 	if c.uploadDelay[1] > c.uploadDelay[0] {
 		delay := c.uploadDelay[0] + rand.Intn(c.uploadDelay[1]-c.uploadDelay[0])
 		time.Sleep(time.Duration(delay) * time.Millisecond)
 	}
 
-	// 构造上传字段
+	// 构造上传字段（与蓝奏云 web 端 html5up.php 一致）
+	// 注意：folder_id 字段名为 folder_id_bb_n，vie/ve 为固定值，无需 t_a/t_b/t_c
 	descStr := ""
 	if len(desc) > 0 {
 		descStr = desc[0]
 	}
 	fields := map[string]string{
-		"task":          "1",
-		"folder_id":     fmt.Sprintf("%d", fid),
-		"id":            "WU_FILE_0",
-		"name":          filepath.Base(filePath),
-		"upload_type":   "file",
-		"t_a":           uploadInfo.TA,
-		"t_b":           uploadInfo.TB,
-		"t_c":           uploadInfo.TC,
-		"ve":            "1",
-		"des":           descStr,
-		"ss":            md5Str,
+		"task":           "1",
+		"vie":            "2",
+		"ve":             "2",
+		"id":             "WU_FILE_0",
+		"folder_id_bb_n": fmt.Sprintf("%d", fid),
+		"name":           filepath.Base(filePath),
+	}
+	if descStr != "" {
+		fields["des"] = descStr
 	}
 
-	// 上传
+	// 上传：必须走 pc.woozooo.com/html5up.php（up.woozooo.com/up.php 只返回 HTML 页面）
+	headers := map[string]string{
+		"Referer": baseURLPC + "/mydisk.php",
+		"Origin":  baseURLPC,
+	}
 	body, _, err := c.postMultipart(
-		baseURLUpload+pathUpload,
+		baseURLPC+pathUpload,
 		fields,
 		"upload_file",
 		filepath.Base(filePath),
 		f,
-		nil,
+		headers,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("upload request failed: %w", err)
 	}
 
-	var resp UploadResult
+	var resp uploadResp
 	if err := json.Unmarshal(body, &resp); err != nil {
-		return nil, fmt.Errorf("%w: invalid upload response", ErrAPIError)
+		return nil, fmt.Errorf("%w: invalid upload response (not JSON, first 200 bytes: %q)", ErrAPIError, truncate(string(body), 200))
 	}
-	if resp.Zt == 0 {
-		return nil, fmt.Errorf("%w: %s", ErrUploadFailed, resp.Info)
+	if resp.Zt != 1 {
+		infoStr := resp.Info
+		return nil, fmt.Errorf("%w: zt=%d info=%s", ErrUploadFailed, resp.Zt, infoStr)
 	}
-	return &resp, nil
+
+	// text 是数组，第一个元素包含 file_id 和 name_all
+	result := &UploadResult{
+		Zt:   resp.Zt,
+		Info: resp.Info,
+	}
+	if len(resp.Text) > 0 {
+		result.FileID = resp.Text[0].ID
+		result.FileName = resp.Text[0].NameAll
+	}
+	return result, nil
+}
+
+// uploadResp html5up.php 上传接口响应
+type uploadResp struct {
+	Zt   int `json:"zt"`
+	Info string `json:"info"`
+	Text []struct {
+		ID      string `json:"id"`
+		NameAll string `json:"name_all"`
+	} `json:"text"`
+}
+
+// truncate 截断字符串到指定长度，用于错误信息
+func truncate(s string, n int) string {
+	if len(s) <= n {
+		return s
+	}
+	return s[:n] + "..."
 }
 
 // UploadFileByURL 上传网盘已有文件（非本地文件）
@@ -129,48 +144,4 @@ func (c *Client) UploadFileByURL(fileURL string, fid int, desc ...string) (*Uplo
 		return nil, fmt.Errorf("%w: %s", ErrUploadFailed, resp.Info)
 	}
 	return &resp, nil
-}
-
-// uploadInfo 上传参数
-type uploadInfo struct {
-	TA string `json:"t_a"`
-	TB string `json:"t_b"`
-	TC string `json:"t_c"`
-}
-
-// getUploadParams 获取上传所需的动态参数
-func (c *Client) getUploadParams(fid int) (*uploadInfo, error) {
-	// 先获取上传页面，提取动态参数
-	data := map[string]string{
-		"task":      "1",
-		"folder_id": fmt.Sprintf("%d", fid),
-	}
-	body, _, err := c.post(baseURLUpload+pathUpload, data, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	// 尝试从响应中提取参数
-	var resp struct {
-		Zt   int `json:"zt"`
-		Text struct {
-			TA string `json:"t_a"`
-			TB string `json:"t_b"`
-			TC string `json:"t_c"`
-		} `json:"text"`
-	}
-	if err := json.Unmarshal(body, &resp); err == nil && resp.Text.TA != "" {
-		return &uploadInfo{
-			TA: resp.Text.TA,
-			TB: resp.Text.TB,
-			TC: resp.Text.TC,
-		}, nil
-	}
-
-	// 回退：使用默认参数
-	return &uploadInfo{
-		TA: fmt.Sprintf("%d", time.Now().UnixMilli()),
-		TB: fmt.Sprintf("%d", time.Now().UnixMilli()+1000),
-		TC: fmt.Sprintf("%d", time.Now().UnixMilli()+2000),
-	}, nil
 }

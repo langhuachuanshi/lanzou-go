@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -90,7 +91,7 @@ func NewClient(opts ...Option) *Client {
 		maxDLCount: defaultMaxDLCount,
 		uploadDelay: [2]int{0, 0},
 		challenge:  DefaultChallengeConfig(),
-		vei:        "UFRQUlBWVggGBAdX", // 默认 vei 值
+		vei:        defaultVei, // 默认占位值，initUIDAndVei() 会动态获取
 	}
 	for _, opt := range opts {
 		opt(c)
@@ -228,6 +229,30 @@ func (c *Client) apiURL(path string) string {
 func (c *Client) initUID() {
 	if c.uid == "" {
 		c.uid = c.getCookieValue("ylogin")
+	}
+}
+
+// initUIDAndVei 初始化 uid 和 vei（vei 是 anti-CSRF token，从 mydisk.php 页面 JS 中提取）
+// vei 是页面 JS 中硬编码的静态值，形如 'V1NTUQ1fAg4PDVdW'，会随会话变化
+func (c *Client) initUIDAndVei() {
+	c.initUID()
+	if c.vei != "" && c.vei != defaultVei {
+		return // 已经初始化过动态 vei
+	}
+	// 从 mydisk.php 页面提取 vei
+	pageURL := baseURLPC + "/mydisk.php?item=files&action=index"
+	body, _, err := c.get(pageURL, nil)
+	if err != nil {
+		return
+	}
+	html := string(body)
+	// 匹配 JS 中的 vei 值: 'vei':'XXXXXXX'
+	for _, pat := range []string{`'vei':'([^']+)'`, `"vei":"([^"]+)"`} {
+		re := regexp.MustCompile(pat)
+		if m := re.FindStringSubmatch(html); len(m) >= 2 {
+			c.vei = m[1]
+			return
+		}
 	}
 }
 

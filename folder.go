@@ -7,15 +7,16 @@ import (
 )
 
 // GetDirList 获取子文件夹列表
-// fid: 父文件夹ID，根目录传 0
+// fid: 父文件夹ID，根目录传 -1（蓝奏云根目录的 folder_id 是 -1，不是 0）
 func (c *Client) GetDirList(fid int) (*FolderList, error) {
 	if !c.isLoggedIn() {
 		return nil, ErrNotLoggedIn
 	}
-	c.initUID()
+	c.initUIDAndVei()
 	data := map[string]string{
 		"task":      "47",
 		"folder_id": fmt.Sprintf("%d", fid),
+		"vei":       c.vei,
 	}
 	body, _, err := c.post(c.apiURL(pathTaskAPI), data, nil)
 	if err != nil {
@@ -26,24 +27,26 @@ func (c *Client) GetDirList(fid int) (*FolderList, error) {
 	if err := json.Unmarshal(body, &resp); err != nil {
 		return nil, fmt.Errorf("%w: invalid folder list response", ErrAPIError)
 	}
-	if resp.Zt == 0 {
-		return nil, fmt.Errorf("%w: %s", ErrAPIError, resp.Info)
+	// zt=1 正常, zt=2 也是成功（空列表时蓝奏云返回 zt=2）
+	if resp.Zt != 1 && resp.Zt != 2 {
+		return nil, fmt.Errorf("%w: zt=%d info=%s", ErrAPIError, resp.Zt, string(resp.Info))
 	}
 	return &resp, nil
 }
 
 // NewFolder 创建文件夹
-// name: 文件夹名称, parentID: 父文件夹ID（根目录传 0）
+// name: 文件夹名称, parentID: 父文件夹ID（根目录传 -1）
 func (c *Client) NewFolder(name string, parentID int) (*FolderInfo, error) {
 	if !c.isLoggedIn() {
 		return nil, ErrNotLoggedIn
 	}
-	c.initUID()
+	c.initUIDAndVei()
 	data := map[string]string{
 		"task":      "2",
 		"parent_id": fmt.Sprintf("%d", parentID),
 		"folder_name": name,
 		"folder_description": "",
+		"vei":       c.vei,
 	}
 	body, _, err := c.post(c.apiURL(pathTaskAPI), data, nil)
 	if err != nil {
@@ -74,10 +77,11 @@ func (c *Client) DeleteFolder(fids []string) error {
 	if !c.isLoggedIn() {
 		return ErrNotLoggedIn
 	}
-	c.initUID()
+	c.initUIDAndVei()
 	data := map[string]string{
 		"task":      "3",
 		"folder_id": strings.Join(fids, "-"),
+		"vei":       c.vei,
 	}
 	body, _, err := c.post(c.apiURL(pathTaskAPI), data, nil)
 	if err != nil {
@@ -92,7 +96,7 @@ func (c *Client) MoveFolder(fids []string, fid int) error {
 	if !c.isLoggedIn() {
 		return ErrNotLoggedIn
 	}
-	c.initUID()
+	c.initUIDAndVei()
 	data := map[string]string{
 		"task":        "24",
 		"folder_id":   fmt.Sprintf("%d", fid),
