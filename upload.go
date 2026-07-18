@@ -73,6 +73,11 @@ func (c *Client) UploadFile(filePath string, fid int, desc ...string) (*UploadRe
 		return nil, fmt.Errorf("upload request failed: %w", err)
 	}
 
+	return parseUploadResult(body)
+}
+
+// parseUploadResult 解析上传响应，UploadFile 和 UploadFileWithProgress 共用。
+func parseUploadResult(body []byte) (*UploadResult, error) {
 	var resp uploadResp
 	if err := json.Unmarshal(body, &resp); err != nil {
 		return nil, fmt.Errorf("%w: invalid upload response (not JSON, first 200 bytes: %q)", ErrAPIError, truncate(string(body), 200))
