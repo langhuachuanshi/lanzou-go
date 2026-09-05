@@ -44,35 +44,35 @@ func main() {
 
 	// ===== 示例3：获取文件列表 =====
 	fmt.Println("\n=== 示例3：文件列表 ===")
-	files, err := client.GetFileList(0) // 根目录
+	files, err := client.GetFileList(-1) // 根目录
 	if err != nil {
 		log.Printf("获取文件列表失败: %v\n", err)
 	} else {
 		fmt.Printf("共 %d 个文件:\n", len(files.Text))
 		for _, f := range files.Text {
-			fmt.Printf("  [%s] %s (%s) - %s\n", f.FileID, f.FileName, f.FileSize, f.UploadTime)
+			fmt.Printf("  [%s] %s (%s) - %s\n", f.ID, f.NameAll, f.Size, f.Time)
 		}
 	}
 
 	// ===== 示例4：获取文件夹列表 =====
 	fmt.Println("\n=== 示例4：文件夹列表 ===")
-	folders, err := client.GetDirList(0) // 根目录
+	folders, err := client.GetDirList(-1) // 根目录
 	if err != nil {
 		log.Printf("获取文件夹列表失败: %v\n", err)
 	} else {
 		fmt.Printf("共 %d 个文件夹:\n", len(folders.Text))
 		for _, f := range folders.Text {
-			fmt.Printf("  [%s] %s (%d 个文件)\n", f.FolderID, f.FolderName, f.FileCount)
+			fmt.Printf("  [%s] %s\n", f.FolID, f.Name)
 		}
 	}
 
 	// ===== 示例5：创建文件夹 =====
 	fmt.Println("\n=== 示例5：创建文件夹 ===")
-	newFolder, err := client.NewFolder("test-folder", 0)
+	newFolder, err := client.NewFolder("test-folder", -1)
 	if err != nil {
 		log.Printf("创建文件夹失败: %v\n", err)
 	} else {
-		fmt.Printf("创建成功: [%s] %s\n", newFolder.FolderID, newFolder.FolderName)
+		fmt.Printf("创建成功: [%s] %s\n", newFolder.FolID, newFolder.Name)
 	}
 
 	// ===== 示例6：上传文件 =====
@@ -108,7 +108,7 @@ func main() {
 
 	// ===== 示例9：批量下载文件夹 =====
 	fmt.Println("\n=== 示例9：批量下载文件夹 ===")
-	err = client.DownloadDir("./downloads/myfolder", 0)
+	err = client.DownloadDir("./downloads/myfolder", -1) // 根目录
 	if err != nil {
 		log.Printf("批量下载失败: %v\n", err)
 	} else {

@@ -25,8 +25,11 @@ func NewClient(opts ...Option) *Client
 client.SetTimeout(60)
 client.SetMaxSize(50 * 1024 * 1024)
 client.SetMaxDownloadCount(5)
+client.SetUploadDelay(100, 500) // 上传延迟（毫秒）
 client.SetChallengeConfig(&cfg)
+client.GetChallengeConfig()     // 获取当前挑战参数
 // cookie 注入
+client.SetCookies(cookies)      // []*http.Cookie
 client.SetCookiesFromMap(map[string]string{...})
 ```
 
@@ -64,10 +67,29 @@ type FileDetail struct {
     FileID      string `json:"file_id"`
     NameAll     string `json:"name_all"`   // 文件名
     Size        string `json:"size"`       // 文件大小
+    UploadTime  string `json:"time"`       // 上传时间
     DURL        string `json:"durl"`       // 直链
     DownloadURL string `json:"url"`        // 分享链接
+    Description string `json:"des"`        // 描述
+    IsNewd      int    `json:"is_newd"`
 }
 ```
+
+### GetDurlByFolderURL
+
+```go
+func (c *Client) GetDurlByFolderURL(folderURL, pwd string, subdir bool) ([]string, error)
+```
+
+通过文件夹分享链接获取直链列表。
+
+### GetDurlByURLAndFolder
+
+```go
+func (c *Client) GetDurlByURLAndFolder(shareURL, pwd, folderID string) (string, error)
+```
+
+等价于 `GetDurlByURL`。
 
 ---
 
@@ -109,7 +131,7 @@ func (c *Client) GetFileList(fid int) (*FileList, error)
 
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
-| fid | int | ✅ | 文件夹ID，根目录传 `0` |
+| fid | int | ✅ | 文件夹ID，根目录传 `-1` |
 
 ```go
 type FileInfo struct {
@@ -119,6 +141,26 @@ type FileInfo struct {
     Time    string `json:"time"`     // 上传时间
     Icon    string `json:"icon"`     // 图标类型
     Downs   string `json:"downs"`    // 下载次数
+    Onof    string `json:"onof"`     // 密码开关
+    IsNewd  string `json:"is_newd"`  // 分享URL前缀
+    FID     string `json:"f_id"`     // 分享ID
+}
+```
+
+### GetShareURL
+
+```go
+func (c *Client) GetShareURL(fileID string) (*FileShareInfo, error)
+```
+
+获取文件的分享链接（fileID 为 `GetFileList` 返回的 `FileInfo.ID`）。
+
+```go
+type FileShareInfo struct {
+    IsNewd string `json:"is_newd"` // 分享URL前缀，如 https://wwa.lanzoui.com
+    FID    string `json:"f_id"`    // 分享ID，拼接在 is_newd 后面
+    Pwd    string `json:"pwd"`     // 提取密码（"" 表示无密码）
+    Onof   string `json:"onof"`    // 是否有密码 "1"=有 "2"=无
 }
 ```
 
@@ -158,6 +200,14 @@ func (c *Client) DownloadDir(saveDir string, fid int) error
 
 递归下载整个文件夹（含子文件夹）。
 
+### DownloadByURL
+
+```go
+func (c *Client) DownloadByURL(savePath, durl string) error
+```
+
+直接通过直链下载。
+
 ### UploadFile
 
 ```go
@@ -165,6 +215,22 @@ func (c *Client) UploadFile(filePath string, fid int, desc ...string) (*UploadRe
 ```
 
 上传本地文件。
+
+### UploadFileWithProgress
+
+```go
+func (c *Client) UploadFileWithProgress(filePath string, fid int, onProgress func(uploaded, total int64), desc ...string) (*UploadResult, error)
+```
+
+流式上传本地文件，支持进度回调。与 `UploadFile` 的区别：文件内容不一次性载入内存，`onProgress` 在网络传输时触发，反映真实上传进度（可为 `nil`）。
+
+### UploadFileByURL
+
+```go
+func (c *Client) UploadFileByURL(fileURL string, fid int, desc ...string) (*UploadResult, error)
+```
+
+上传网盘已有文件（非本地文件）。
 
 ### MoveFiles
 
@@ -196,9 +262,11 @@ func (c *Client) GetDirList(fid int) (*FolderList, error)
 
 ```go
 type FolderInfo struct {
-    FolID  string `json:"fol_id"`  // 文件夹ID
-    Name   string `json:"name"`    // 名称
-    Onof   string `json:"onof"`    // 密码开关
+    FolID      string `json:"fol_id"`     // 文件夹ID
+    Name       string `json:"name"`       // 名称
+    FolderDesc string `json:"folder_des"` // 描述
+    Onof       string `json:"onof"`       // 密码开关
+    IsLock     string `json:"is_lock"`    // 锁定
 }
 ```
 
@@ -234,7 +302,6 @@ func (c *Client) MoveFolder(fids []string, fid int) error
 ErrNotLoggedIn    // 未登录
 ErrFileExpired    // 文件已过期
 ErrPasswordWrong  // 密码错误
-ErrPasswordNeeded // 需要密码
 ErrFileSizeLimit  // 超过大小限制
 ErrInvalidURL     // 无效链接
 ErrExtractFailed  // 页面解析失败
@@ -255,4 +322,4 @@ client.SetChallengeConfig(&lanzou.ChallengeConfig{
 })
 ```
 
-详见 [README.md](./README.md#蓝奏云换混淆时如何更新)
+详见 [README.md](./README.md#蓝奏云换混淆时如何更新)。内置默认参数可通过 `DefaultChallengeConfig()` 获取。

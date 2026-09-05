@@ -22,7 +22,7 @@
 //	defer client.Logout()
 //
 //	// 获取文件列表
-//	files, err := client.GetFileList(0)
+	//	files, err := client.GetFileList(-1)
 //	if err != nil {
 //	    log.Fatal(err)
 //	}

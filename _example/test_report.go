@@ -111,8 +111,8 @@ func main() {
 	// ===============================================
 	section("三、文件操作")
 
-	runTest("3.1 GetFileList (根目录 fid=0)", func() (string, error) {
-		files, err := client.GetFileList(0)
+	runTest("3.1 GetFileList (根目录 fid=-1)", func() (string, error) {
+		files, err := client.GetFileList(-1)
 		if err != nil {
 			return "", err
 		}
@@ -141,7 +141,7 @@ func main() {
 	section("四、文件夹操作")
 
 	runTest("4.1 GetDirList (根目录)", func() (string, error) {
-		folders, err := client.GetDirList(0)
+		folders, err := client.GetDirList(-1)
 		if err != nil {
 			return "", err
 		}
@@ -168,7 +168,7 @@ func main() {
 	var testFolderID string
 
 	runTest("5.1 NewFolder (test-sdk-xxx)", func() (string, error) {
-		folder, err := client.NewFolder("test-sdk-tmp", 0)
+		folder, err := client.NewFolder("test-sdk-tmp", -1)
 		if err != nil {
 			return "", err
 		}

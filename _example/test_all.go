@@ -47,7 +47,7 @@ func main() {
 
 	// 3. 文件夹列表（根目录）
 	test("3. GetDirList (根目录)", func() error {
-		folders, err := client.GetDirList(0)
+		folders, err := client.GetDirList(-1)
 		if err != nil {
 			return err
 		}
@@ -64,7 +64,7 @@ func main() {
 
 	// 4. 文件列表（根目录）
 	test("4. GetFileList (根目录)", func() error {
-		files, err := client.GetFileList(0)
+		files, err := client.GetFileList(-1)
 		if err != nil {
 			return err
 		}

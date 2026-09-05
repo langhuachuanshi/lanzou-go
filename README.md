@@ -2,7 +2,7 @@
 
 > 蓝奏云网盘 Go SDK，基于逆向协议实现，零第三方依赖。
 
-[![Go Version](https://img.shields.io/badge/Go-1.18+-00ADD8?style=flat&logo=go)](https://go.dev/)
+[![Go Version](https://img.shields.io/badge/Go-1.26+-00ADD8?style=flat&logo=go)](https://go.dev/)
 [![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 
 ## 安装
@@ -23,7 +23,7 @@ durl, _ := client.GetDurlByURL("https://pan.lanzoul.com/xxxxx", "")
 
 // 登录后：管理文件
 client.Login("user", "pass")
-files, _ := client.GetFileList(0)
+files, _ := client.GetFileList(-1)
 for _, f := range files.Text {
     fmt.Printf("[%s] %s (%s)\n", f.ID, f.NameAll, f.Size)
 }
@@ -35,9 +35,9 @@ for _, f := range files.Text {
 |------|------|
 | 🔗 直链解析 | 分享链接 → 真实下载直链（无需登录） |
 | 👤 账号 | 登录/登出、用户信息、容量查询 |
-| 📁 文件 | 列表、上传、下载、删除、移动、设密码 |
+| 📁 文件 | 列表、上传（含流式进度上传）、下载、删除、移动、设密码、获取分享链接 |
 | 📂 文件夹 | 创建、删除、移动、列表 |
-| 🗑️ 回收站 | 列表、恢复、清空 |
+| 🗑️ 回收站 | 移入、列表、恢复、清空 |
 
 ## 配置
 

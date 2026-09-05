@@ -19,8 +19,8 @@ func main() {
 	}
 
 	fmt.Println("=== 解析结果 ===")
-	fmt.Printf("文件名:   %s\n", detail.FileName)
-	fmt.Printf("文件大小: %s\n", detail.FileSize)
+	fmt.Printf("文件名:   %s\n", detail.NameAll)
+	fmt.Printf("文件大小: %s\n", detail.Size)
 	fmt.Printf("文件ID:   %s\n", detail.FileID)
 	fmt.Printf("直链:     %s\n", detail.DURL)
 	fmt.Printf("IsNewd:   %d\n", detail.IsNewd)
